@@ -1,0 +1,124 @@
+<!-- <!doctype html>
+<html lang="en">
+  <head>
+  	<title>Sidebar 07</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+		
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+		<link rel="stylesheet" href="css/style.css">
+  </head>
+  <body> -->
+  
+    {% load static %}
+		
+		<div class="wrapper d-flex align-items-stretch">
+			<nav id="sidebar" class="active">
+				<h1><a href="" class="logo"> <img src="{% static 'images/logo2.jpg' %}" height="40em" style="margin-bottom: 2vh;">
+          Fixix  </a></h1>
+        <ul class="list-unstyled components mb-5">
+          {% if user.is_authenticated %}
+          <li class="active">
+            <a href="{% url 'index' %}"><span class="fa fa-home"></span> Home--->All posts </a>
+          </li>
+          <a href="{% url 'following' %}"><span class="fa fa-user"></span> Following </a>
+        </li>
+        <li>
+          <a href="{% url 'saved' %}"><span class="fa fa-sticky-note"></span> Saved</a>
+        </li>
+        <li>
+          <a href="{% url 'profile' username=user.username %}"><span class="fa fa-cogs"></span> Profile</a>
+        </li>
+        <li>
+          <a href="{% url 'logout' %}"><span class="fa fa-sign-out"></span> Log Out</a>
+        </li>
+          <li>
+          <!-- Modal -->
+         <a href=" {% url 'createpost' %} "> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+            Create Post
+          </button></a>
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Create a post </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="exampleFormControlTextarea1" class="form-label">Example textarea</label>
+          
+          
+          <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="mb-3">
+        
+        <label for="formFile" class="form-label"><span class="fa-duotone fa-file-image">photo</span> </label>
+        <input class="form-control" type="file" id="formFile">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+       <a href="# "></a> <button type="button" class="btn btn-primary">Post</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+      
+          {% else %}
+            <a href="{% url 'login' %}"><span class="fa fa-sign-in"></span> Log In</a>
+          </li>
+          <li>
+            <a href="{% url 'register' %}"><span class="fa fa-address-card"></span> Sign up </a>
+          </li>
+          <li>
+        </ul>
+        {% endif %}
+        
+        <!-- <button id="popup-btn" class="btn btn-primary new-post-btn" onclick="createpost()">Create Post</button> -->
+        <!-- Button trigger modal -->
+
+
+
+        <div class="footer">
+        	<p>
+			 Copyright &copy;<script>document.write(new Date().getFullYear());</script> <strong style="color:deeppink ; font-weight: bold; ">Fixix </strong> </a>
+			</p>
+        </div>
+    	</nav>
+
+        <!-- Page Content  -->
+      <div id="content" class="p-4">
+        <button type="button" id="sidebarCollapse" class="btn btn-primary" style ="width:auto;">
+            <i class="fa fa-bars"></i>
+            <span class="sr-only">Toggle Menu</span>
+          </button>
+        </div>
+        
+       
+</div>
+<div style="position: absolute; bottom: 10px;">
+  {% if user.is_authenticated %}    
+      <li class="nav-item sidenav-user">
+          <a href="{% url 'profile' user.username %}" class="nav-link">
+              <div class="user_account">
+                  <div class="small-profilepic" style="float: left; background-image: url(/media/{{user.profile_pic}})"></div>
+                  <div style="height: 2.7vw; margin: auto;">
+                      <div style="margin-top: 4px;"><strong>{{user.first_name}} {{user.last_name}}</strong></div>
+                      <div class="grey" style="margin-top: 4px;">@{{ user.username }}</div>
+                  </div>
+              </div>
+          </a>
+      </li>
+  {% endif %}
+  {% if user.is_authenticated %}
+      <input type="hidden" id="user_is_authenticated" value="True" data-username='{{user.username}}'>
+  {% else %}
+      <input type="hidden" id="user_is_authenticated" value="False">
+  {% endif %}
+</div>
+
