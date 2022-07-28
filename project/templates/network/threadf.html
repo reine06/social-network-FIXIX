@@ -1,0 +1,97 @@
+{% extends 'network/index.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+
+
+{% block content %}
+
+<div class="container">
+   <div class="row">
+     <div class="card col-md-12 mt-5 p-3 shadow-sm" >
+     {% if threads.receiver == request.user %}
+     <h5> @{{threads.user}} </h5>
+     {% else %}
+     <h5> @{{threads.receiver}} </h5>
+     {% endif %}
+     </div>
+   </div>
+
+	
+	{% if message_list.all.count == 0 %}
+	<div class="row my-5">
+		<div class="col-md-12">
+			<p class="empty-text">No Messages</p>
+		</div>
+	</div>
+	{% endif %}
+
+	{% for message in message_list %}
+	<div class="row">
+		<div class="col-md-12 my-1">
+			{% if message.sender_user == request.user %}
+				<div class="sent-message my-3">
+                    <div>
+                        <a href="{% url 'profile' message.sender_user.username %}">
+                        <span><img src="{{message.sender_user.profile_pic.url}}" class="small-profilepic" alt=""> </span>
+                        </a>
+                        
+                        <span style="color:deeppink ;">@{{ message.sender_user.username }}</span>
+                        <span>{{ message.body }}</span>
+                    
+                   </div>
+					
+                    <span class="grey">
+                       {{message.date |date:"P d M Y"}}
+                        </span>
+					
+				</div>
+			{% elif message.receiver_user == request.user %}
+				<div class="received-message my-3">
+                    <div>
+                        <a href="{% url 'profile' message.sender_user.username %}">
+                        <span><img src="{{message.receiver_user.profile_pic.url}}" class="small-profilepic" alt=""></span>
+                       </a>
+                       
+                       <span style="color:deeppink ;">@{{ message.receiver_user.username }}</span>
+                       <span>{{ message.body }}</span>
+                    </div>
+                   </div>
+					
+                    <span class="grey">
+                       {{message.date |date:"P d M Y "}}
+                        </span>
+					
+				</div>
+			{% endif %}
+		</div>
+	</div>
+	{% endfor %}
+
+	<div class="row">
+		<div class="card col-md-12 p-3 shadow-sm">
+			<form method="POST" action="{% url 'create-message' threads.receiver.id %}" enctype="multipart/form-data">
+				{% csrf_token %}
+				{{ form | crispy }}
+
+				<div class="d-grid gap-2 mt-3">
+                    <div class="form-action-btns">
+                        <div>
+                            <input name='picture' accept="image/jpeg,image/png,image/webp,image/gif" type="file" style="display: none;" id="insert-img" data-focusable="true">
+                            <label for="insert-img" class="icon-btn form-icon-btn"> 
+                                <svg width="1.1em" height="1.4em" viewBox="0 0 16 16" class="bi bi-image" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="margin-left:2px">
+                                    <path fill-rule="evenodd" d="M14.002 2h-12a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zm-12-1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12z"/>
+                                    <path d="M10.648 7.646a.5.5 0 0 1 .577-.093L15.002 9.5V14h-14v-2l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71z"/>
+                                    <path fill-rule="evenodd" d="M4.502 7a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                                </svg><span style="font-size: 0.95em;">&nbsp;Image</span>
+                            </label>
+                            <button class="btn btn-primary" type="submit">Send Message</button>
+                        </div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+
+{% endblock content %}

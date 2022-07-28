@@ -1,3 +1,4 @@
+from asyncio import threads
 from django.shortcuts import render,redirect
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate,login,logout
@@ -9,10 +10,19 @@ from .models import *
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 import json
+from django.views import View
+from django.db.models import Q
+from .forms import  ThreadForm, MessageForm
+
 
 # Create your views here.
 
+    
+
+
 def index(request):
+   print('in index')
+   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
    all_posts= Post.objects.order_by('-date_created')
    paginator = Paginator(all_posts,5)#5 posts par page
    page_number = request.GET.get('page')#page recupere et mets ces donnees
@@ -26,13 +36,16 @@ def index(request):
    followings = []
    suggestions = []
    if request.user.is_authenticated:
-      followings = Follower.objects.filter(followers=request.user).values_list('user', flat=True)
+      followings = Follower.objects.filter(followers=request.user)
+      print(followings)
       suggestions = User.objects.exclude(pk__in=followings).exclude(username=request.user.username).order_by("?")[:6]
    return render(request, 'network/index.html', {
         "posts": posts,
         "suggestions": suggestions,
         "page": "all_posts",
-        'profile': False
+        'profile': False,
+        'threads':threads, 
+        "followings": followings,
     })
       # for f in followings:
       #    postDesPersonnesQueJeSuis.append(f.follower.posts_list)
@@ -137,6 +150,7 @@ def profile(request, username):
      })'''
 
 def profile(request, username):
+    threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
     user = User.objects.get(username=username)
     all_posts = Post.objects.filter(creater=user).order_by('-date_created')
     paginator = Paginator(all_posts, 5)
@@ -164,6 +178,7 @@ def profile(request, username):
         "suggestions": suggestions,
         "page": "profile",
         "is_follower": follower,
+        'threads':threads,
         "follower_count": follower_count,
         "following_count": following_count
     })
@@ -209,10 +224,10 @@ def following(request):
       if page_number == None:
          page_number = 1
       posts = paginator.get_page(page_number)
-      followings = Follower.objects.filter(followers=request.user).values_list('user', flat=True)
+      followings = Follower.objects.filter(followers=request.user)
       suggestions = User.objects.exclude(pk__in=followings).exclude(username=request.user.username).order_by("?")[:6]
 
-      return render(request, 'network/index.html', { "posts":posts,"page":followings,"suggestions": suggestions } )
+      return render(request, 'network/index.html', { "posts":posts,"followings":followings,"suggestions": suggestions } )
    else:
        return redirect('login')
 
@@ -223,6 +238,8 @@ def following(request):
 
 @login_required  
 def saved(request):
+   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
+
    if request.user.is_authenticated:
       all_posts = Post.objects.filter(savers=request.user).order_by('date_created')
       paginator = Paginator(all_posts,5)
@@ -231,7 +248,8 @@ def saved(request):
          page_number = 1
       posts = paginator.get_page(page_number)
       Follower.objects.filter(followers=request.user)
-      return render(request,'network/index.html', { "posts":posts,"page":"saved" })
+      
+      return render(request,'network/index.html', { "posts":posts,"page":"saved", 'threads':threads })
    else:
       return redirect('login')
         
@@ -266,11 +284,14 @@ def unlike_post(request,id):
 @login_required
 @csrf_exempt
 def save_post(request,id):
+   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
    if request.user.is_authenticated:
       post = Post.objects.get(pk=id)
       post.savers.add(request.user)
       post.save()
-   return redirect('index')
+   return redirect('index', {'threads':threads})
+      
+
 
 @csrf_exempt
 def unsave_post(request,id):
@@ -313,3 +334,137 @@ def edit_post(request,post_id):
          post.content_image = pic
          post_text = post.content_text 
          post.save()
+
+@login_required
+@csrf_exempt
+def inbox(request):
+   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
+
+   return render(request, 'network/inbox.html', {"threads":threads} )
+
+@login_required
+@csrf_exempt
+def createthread( request):
+   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
+
+   form = ThreadForm()
+   if request.method == 'POST':
+      form = ThreadForm(request.POST)
+      username = request.POST.get('username')
+      receiver = User.objects.get(username=username)
+      if form.is_valid():
+         thread = ThreadModel(
+         user=request.user,
+         receiver=receiver
+             )
+         thread.save()
+         return redirect('thread', pk=thread.pk)
+         
+      else:
+         return redirect('create-thread')
+   return render(request, 'network/create_thread.html', {"form":form,'threads':threads,})
+
+
+   
+@login_required
+@csrf_exempt  
+
+def thread(request, pk):
+   form = MessageForm()
+   
+   if ThreadModel.objects.filter(user=request.user, receiver_id= pk).exists() :
+      thread = ThreadModel.objects.filter(user=request.user, receiver_id= pk )[0]
+      message_list = MessageModel.objects.filter(thread__pk__contains=pk)
+      return render(request, 'network/thread.html', {"threads":thread, "form":form, "message_list": message_list })
+
+   elif ThreadModel.objects.filter(receiver=request.user, user_id= pk).exists() :
+         thread = ThreadModel.objects.filter(receiver=request.user, user_id= pk )[0]
+         message_list = MessageModel.objects.filter(thread__pk__contains=pk)
+         return render(request, 'network/thread.html', {"threads":thread, "form":form, "message_list": message_list })
+
+   else:
+      thread = ThreadModel.objects.create(user=request.user, receiver = request.user) 
+      thread.save()
+      message_list = MessageModel.objects.filter(thread__pk__contains=pk)
+
+      return render(request, 'network/thread.html', {"threads":thread, "form":form, "message_list": message_list })
+
+   return render(request, 'network/thread.html', {"threads":thread, "form":form, "message_list": message_list })
+
+def threadfollower(request, receiver_id):
+   form = MessageForm()
+   
+   if ThreadModel.objects.filter(user=request.user, receiver_id= receiver_id).exists() :
+      thread = ThreadModel.objects.filter(user=request.user, receiver_id= receiver_id )[0]
+      message_list = MessageModel.objects.filter(thread=thread)
+      return render(request, 'network/threadf.html', {"threads":thread, "form":form, "message_list": message_list })
+
+   elif ThreadModel.objects.filter(receiver=request.user, user_id= receiver_id).exists() :
+         thread = ThreadModel.objects.filter(receiver=request.user, user_id= receiver_id )[0]
+         message_list = MessageModel.objects.filter(thread=thread)
+         return render(request, 'network/threadf.html', {"threads":thread, "form":form, "message_list": message_list })
+
+   else:
+      thread = ThreadModel.objects.create(user=request.user, receiver_id=receiver_id) 
+      thread.save()
+      message_list = MessageModel.objects.filter(thread=thread)
+
+      return render(request, 'network/threadf.html', {"threads":thread, "form":form, "message_list": message_list })
+
+   return render(request, 'network/thread.html', {"threads":thread, "form":form, "message_list": message_list })
+
+
+
+@login_required
+@csrf_exempt
+def createmessage(request, receiver_id):
+   thread = ThreadModel.objects.filter(user=request.user , receiver_id = receiver_id).first()
+   
+   if request.method == 'POST':
+      if thread.receiver == request.user:
+         receiver = thread.receiver
+         picture =request.FILES.get('picture')
+         message = MessageModel(
+               thread=thread,
+               sender_user=request.user,
+               receiver_user=receiver,
+               image = picture, 
+               body=request.POST.get('message')
+           )
+   
+         message.save()
+         return redirect('threadf', receiver_id)
+      else:
+         receiver = thread.receiver
+         picture =request.FILES.get('picture')
+   
+         message = MessageModel(
+               thread=thread,
+               sender_user=request.user,
+               receiver_user=receiver,
+               image = picture, 
+               body=request.POST.get('message')
+           )
+   
+         message.save()
+         return redirect('threadf', receiver_id)
+
+
+
+@login_required
+@csrf_exempt
+def delete_thread(request,id):
+  
+   thread = ThreadModel.objects.filter(id=id)
+   if request.user == thread.user or request.user == thread.receiver:
+      thread.delete()
+   return redirect('inbox' )
+
+
+def elearning(request):
+   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
+
+   return render(request, 'network/elearning.html', {'threads':threads} )
+
+
+

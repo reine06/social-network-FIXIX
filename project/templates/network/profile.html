@@ -11,13 +11,20 @@
         <div class="profile-details">
             <div>
                 {% if user.username == username.username %}
-                <a href=" #"></a>
+                <a href=" #">
                     <button class="btn btn-outline-primary float-right" id="edit-profile-btn">Edit Profile</button>
-                    <a href=" # "></a>
-                    <button class="btn btn-outline-primary float-right" id="edit-profile-btn">Messages</button>
+                </a>
+               
                 {% elif is_follower %}
+                <a href=" {% url 'threadf' username.id %} ">
+                    <button class="btn btn-outline-primary float-right" id="edit-profile-btn">Messages</button>
+                </a>
+                
                     <button class="btn btn-primary float-right" onclick="unfollow_user(this,'{{username.username}}','edit_page')" id="following-btn">Following</button>
                 {% else %}
+                <a href=" {% url 'threadf' username.id %} ">
+                    <button class="btn btn-outline-primary float-right" id="edit-profile-btn">Messages</button>
+                </a>
                     <button class="btn btn-outline-primary float-right" onclick="follow_user(this,'{{username.username}}','edit_page')" id="follow-btn">Follow</button>
                 {% endif %}
             </div>

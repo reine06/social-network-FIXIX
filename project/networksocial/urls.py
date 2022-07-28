@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import *
 
 urlpatterns = [
     path("index/", views.index, name="index"),
@@ -20,8 +21,15 @@ urlpatterns = [
     path("post/<int:id>/unsave", views.unsave_post, name="unsavepost"),
     path("post/<int:post_id>/comments", views.comment, name="comments"),
     path("post/<int:post_id>/write_comment",views.comment, name="writecomment"),
-   
+    path('elearning/',views.elearning, name='elearning'),
 
+    
+    path('inbox/',views.inbox,name='inbox'),
+    path('inbox/create-thread/', views.createthread, name='create-thread'),
+    path('inbox/<int:pk>/', views.thread, name='thread'),
+    path('inboxf/<int:receiver_id>/', views.threadfollower, name='threadf'),
+    path('inbox/<int:receiver_id>/create-message/', views.createmessage, name='create-message'),
+    path("inbox/<int:id>/delete", views.delete_thread, name="deletethread"),
 
    
 ]

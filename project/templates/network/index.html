@@ -90,8 +90,10 @@
                     Saved
                 {% elif page == 'profile' %}
                     Profile
+                {% elif page == 'message' %}
+                    message
                 {% else %}
-                    Explore Following(s)
+                    Messages
                 {% endif %}
             </nav>
             <div class="left-div-content">
@@ -100,6 +102,9 @@
                     {% block profile %}
                     {% endblock %}
                     <div class="main-div-content">
+                    {% block content %}
+                    {% endblock %}
+                   
                         {% for post in posts %}
                             <div class="post" data-post_id="{{post.id}}">
                                 <div>
