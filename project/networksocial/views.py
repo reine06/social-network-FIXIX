@@ -21,8 +21,8 @@ from .forms import  ThreadForm, MessageForm
 
 
 def index(request):
-   print('in index')
-   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
+   
+   # threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
    all_posts= Post.objects.order_by('-date_created')
    paginator = Paginator(all_posts,5)#5 posts par page
    page_number = request.GET.get('page')#page recupere et mets ces donnees
@@ -44,7 +44,7 @@ def index(request):
         "suggestions": suggestions,
         "page": "all_posts",
         'profile': False,
-        'threads':threads, 
+      #   'threads':threads, 
         "followings": followings,
     })
       # for f in followings:
@@ -109,6 +109,7 @@ def register(request):
                      user.profile_pic = "profile_pic/no_pic.png"
                      user.cover = cover '''          
                   user.save() 
+                  messages.success(request,'you are now register can login')
                   return redirect('login')
    
    return render(request, "network/register.html")
@@ -284,12 +285,11 @@ def unlike_post(request,id):
 @login_required
 @csrf_exempt
 def save_post(request,id):
-   threads = ThreadModel.objects.filter(Q(user=request.user) | Q (receiver=request.user))
    if request.user.is_authenticated:
       post = Post.objects.get(pk=id)
       post.savers.add(request.user)
       post.save()
-   return redirect('index', {'threads':threads})
+   return redirect('index')
       
 
 
@@ -330,10 +330,42 @@ def edit_post(request,post_id):
       # img_chg = request.get('img_change')
       post = Post.objects.get(id=post_id)
       post.content_text =text
-      if pic:
-         post.content_image = pic
-         post_text = post.content_text 
-         post.save()
+
+
+def editprofile(request):
+   if request.method == 'POST':
+      if request.POST['first_name']:
+         firs_tname = request.POST['first_name']
+      if request.POST['last_name']:
+         last_name = request.POST['last_name']
+      if request.POST['username']:
+         username = request.POST['username']
+      if request.FILE['profile_pic']:
+         profile_pic = request.FILE['profile_pic']
+      if request.FILE['cover']:
+         cover = request.FILE['cover']
+         
+      if User.objects.get(user=request.user):
+         u = User.objects.get(user=request.user)
+         if request.POST['first_name']:
+            u.first_name=request.POST['first_name']
+         if request.POST['last_name']:
+            u.last_name=request.POST['last_name']
+         if request.POST['username']:
+            u.username=request.POST['username']
+         if request.POST['profile_pic']:
+                u.profile_pic=request.POST['profile_pic']
+         if request.POST['cover']:
+                u.cover=request.POST['cover']
+         
+         
+      
+       
+
+
+
+
+
 
 @login_required
 @csrf_exempt
@@ -421,7 +453,7 @@ def createmessage(request, receiver_id):
    thread = ThreadModel.objects.filter(user=request.user , receiver_id = receiver_id).first()
    
    if request.method == 'POST':
-      if thread.receiver == request.user:
+      if thread.user == request.user:
          receiver = thread.receiver
          picture =request.FILES.get('picture')
          message = MessageModel(
